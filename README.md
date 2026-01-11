@@ -3,7 +3,7 @@
 This project implements an agentic AI pipeline using **LangChain**, **LangGraph**, and **LangSmith**. It features a Streamlit UI that allows users to:
 
 1.  **Ask for real-time weather** (using OpenWeatherMap).
-2.  **Ask questions about a PDF document** (using RAG with Google Gemini & ChromaDB).
+2.  **Ask questions about a PDF document** (using RAG with Google Gemini & Qdrant).
 3.  **Intelligent routing**: The agent decides which tool to use.
 
 ## Prerequisites
@@ -50,6 +50,11 @@ This project implements an agentic AI pipeline using **LangChain**, **LangGraph*
     -   **Weather**: Ask "What's the weather in New York?"
     -   **RAG**: Upload a PDF in the sidebar. Once processed, ask questions like "Summarize the document."
 
+## Troubleshooting
+
+-   **Qdrant Lock Error**: If you see "Storage folder ... is already accessed", stop the running app (`Ctrl+C`) and restart it. If it persists, delete the `./qdrant_db` folder.
+-   **Google API Quota**: If you hit 429 errors, wait a minute. The app is optimized to batch requests and reuse existing embeddings.
+
 ## Project Structure
 
 -   `app.py`: Main Streamlit application.
@@ -62,10 +67,18 @@ This project implements an agentic AI pipeline using **LangChain**, **LangGraph*
 
 -   The application uses **LangSmith** for tracing. Ensure `LANGCHAIN_TRACING_V2=true` is set in `.env` to view traces in your LangSmith project.
 
+## Rate Limits & Constraints
+
+To ensure this demo runs smoothly on free-tier APIs:
+
+-   **PDF Size**: Max 2MB.
+-   **Chunk Limit**: Max 20 chunks per document.
+-   **Processing Speed**: Documents are processed at 1 chunk per 4 seconds to avoid 429 Errors.
+
 ## Deliverables Checklist
 
 -   [x] LangGraph Agent
 -   [x] Weather Tool
--   [x] RAG with PDF (ChromaDB)
+-   [x] RAG with PDF (Qdrant)
 -   [x] Streamlit UI
 -   [x] Unit Tests

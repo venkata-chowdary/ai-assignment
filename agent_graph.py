@@ -19,17 +19,13 @@ logging.basicConfig(
 
 
 def create_retriever_tool(retriever, name: str, description: str) -> Tool:
-    """Create a tool to do retrieval of documents.
-
-    Args:
-        retriever: The retriever to use for the retrieval
-        name: The name for the tool. This will be passed to the language model,
-            so should be unique and somewhat descriptive.
-        description: The description for the tool. This will be passed to the language
-            model, so should be descriptive.
-
-    Returns:
-        Tool class to pass to an agent
+    """
+    basically making a tool to fetch docs.
+    
+    args:
+        retriever: the logic to get docs
+        name: tool name for llm
+        description: what the tool does (imp for llm)
     """
     return Tool(
         name=name,
@@ -43,42 +39,39 @@ from rag_utils import load_and_chunk_pdf, setup_vector_store, get_retriever
 from langgraph.graph.message import add_messages
 
 class AgentState(TypedDict):
+    # keeping track of messages in list
     messages: Annotated[list[BaseMessage], add_messages]
 
-def create_agent_graph(pdf_path: str = None):
+def create_agent_graph(retriever_tool: Tool = None):
     """
-    Creates the LangGraph agent with optional RAG capabilities.
-    If pdf_path is provided, it initializes RAG tool.
+    creating the main agent graph here.
     """
     
+    # default tool is weather
     tools = [get_weather]
     
-    if pdf_path and os.path.exists(pdf_path):
-        try:
-            chunks = load_and_chunk_pdf(pdf_path)
-            # Initialize Qdrant
-            # Note: In a real app, we might want to persist this or load existing
-            vector_store = setup_vector_store(chunks)
-            retriever = get_retriever(vector_store)
-            
-            retriever_tool = create_retriever_tool(
-                retriever,
-                "retrieve_documents",
-                "Search and retrieve information from the uploaded PDF document. Use this tool when the user asks questions about the document's content."
-            )
-            tools.append(retriever_tool)
-        except Exception as e:
-            print(f"Error initializing RAG: {e}")
+    # if pdf provided, adding rag tool also
+    if retriever_tool is not None:
+        tools.append(retriever_tool)
 
-    # Initialize LLM
+    # checking google key
     if not os.getenv("GOOGLE_API_KEY"):
-        raise ValueError("GOOGLE_API_KEY not set in environment.")
+        raise ValueError("GOOGLE_API_KEY messing.")
         
     llm = ChatGoogleGenerativeAI(model="gemini-2.5-flash", temperature=0)
     llm_with_tools = llm.bind_tools(tools)
 
+    from langchain_core.messages import SystemMessage
+
     def agent_node(state: AgentState):
-        return {"messages": [llm_with_tools.invoke(state["messages"])]}
+        messages = state["messages"]
+        # telling agent to use rag tool if asked about pdf
+        system_msg = SystemMessage(content="You are a helpful assistant. If the user asks to summarize or asks questions about a document, YOU MUST use the 'retrieve_documents' tool to find the information. Do not ask the user for the text if you can retrieve it.")
+        
+        # adding system msg to start
+        messages_with_system = [system_msg] + messages
+        
+        return {"messages": [llm_with_tools.invoke(messages_with_system)]}
 
     # Build Graph
     builder = StateGraph(AgentState)

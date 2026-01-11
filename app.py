@@ -4,83 +4,133 @@ import tempfile
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
 
-from agent_graph import create_agent_graph
+from agent_graph import create_agent_graph, create_retriever_tool
+from rag_utils import load_and_chunk_pdf, setup_vector_store, get_retriever
 
 # Load environment variables
 load_dotenv()
 
 st.set_page_config(page_title="AI Agent Pipeline", layout="wide")
 
-st.title("LangGraph AI Agent: Weather & RAG")
+st.title("LangGraph AI Agent: Weather & RAG (Qdrant)")
 
 # Sidebar for Setup
 st.sidebar.header("Configuration")
 
-# API Key Validation (Basic)
+# Check if keys are set (so it doesn't just crash silently)
 if not os.getenv("GOOGLE_API_KEY"):
-    st.sidebar.error("GOOGLE_API_KEY is missing in .env")
+    st.sidebar.error("Yo! You forgot the GOOGLE_API_KEY in .env")
 if not os.getenv("OPENWEATHERMAP_API_KEY"):
-    st.sidebar.error("OPENWEATHERMAP_API_KEY is missing in .env")
+    st.sidebar.error("The Weather API key is missing too!")
 
-# File Upload
+# File Upload 
+# I put this in the sidebar to keep the main chat clean
 uploaded_file = st.sidebar.file_uploader("Upload a PDF for RAG", type=["pdf"])
 
-# Initialize Session State
+from qdrant_client import QdrantClient
+
+# --- RAG INITIALIZATION (CACHED) ---
+@st.cache_resource
+def get_qdrant_client():
+    """
+    getting singleton qdrant client. works better this way.
+    """
+    return QdrantClient(path="./qdrant_db")
+
+@st.cache_resource
+def init_rag_system(file_path: str):
+    """
+    initializing rag system here. cached for speed.
+    """
+    try:
+        # getting client
+        client = get_qdrant_client()
+        
+        chunks = load_and_chunk_pdf(file_path)
+        # setup_vector_store handles rate limits nicely
+        vector_store = setup_vector_store(chunks, client=client)
+        retriever = get_retriever(vector_store)
+        
+        # creating tool for agent
+        tool = create_retriever_tool(
+            retriever,
+            "retrieve_documents",
+            "Search and retrieve information from the uploaded PDF document. Use this tool when the user asks questions about the document's content."
+        )
+        return tool
+    except Exception as e:
+        st.error(f"failed to init rag: {e}")
+        return None
+
+# init session vars
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
-if "graph" not in st.session_state:
-    # Initialize basic graph without PDF first
-    st.session_state.graph = create_agent_graph()
+# global var
+retriever_tool = None
 
-# Handle File Upload
+# file upload logic
 if uploaded_file:
-    # Check if we processed this file already to avoid re-processing on every rerun
-    if st.session_state.get("current_file") != uploaded_file.name:
-        with st.spinner("Processing PDF..."):
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
-                tmp_file.write(uploaded_file.getvalue())
-                tmp_path = tmp_file.name
+    # 2MB check for free tier
+    MAX_FILE_SIZE = 2 * 1024 * 1024 # 2MB
+    
+    if uploaded_file.size > MAX_FILE_SIZE:
+        st.sidebar.error("File limit is 2MB only. Please upload smaller file.")
+    else:
+        # saving to temp file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
+            tmp_file.write(uploaded_file.getvalue())
+            tmp_path = tmp_file.name
+    
+        # init rag
+        with st.spinner("Setting up RAG (might take few secs)..."):
+            retriever_tool = init_rag_system(tmp_path)
             
-            # Re-create graph with PDF
-            st.session_state.graph = create_agent_graph(tmp_path)
-            st.session_state.current_file = uploaded_file.name
-            st.sidebar.success(f"Loaded {uploaded_file.name}")
-            # Clean up temp file (os.remove) could be done here or later
+        if retriever_tool:
+            st.sidebar.success(f"Loaded {uploaded_file.name} successfully!")
 
-# Chat Interface
+# recreating graph
+st.session_state.graph = create_agent_graph(retriever_tool) 
+
+def context_text(msg_content):
+    if isinstance(msg_content, list):
+        # clean text from blocks
+        return "".join([block["text"] for block in msg_content if "text" in block])
+    return msg_content
+
+# display chat history
 for msg in st.session_state.messages:
     if isinstance(msg, HumanMessage):
         with st.chat_message("user"):
-            st.markdown(msg.content)
+            st.markdown(context_text(msg.content))
     elif isinstance(msg, AIMessage):
         with st.chat_message("assistant"):
-            st.markdown(msg.content)
+            st.markdown(context_text(msg.content))
 
-if prompt := st.chat_input("Ask about the weather or your PDF..."):
-    # Add user message
+if prompt := st.chat_input("Ask about weather or pdf..."):
+    # add user msg
     st.session_state.messages.append(HumanMessage(content=prompt))
     with st.chat_message("user"):
         st.markdown(prompt)
 
-    # Run Agent
+    # run agent
     with st.chat_message("assistant"):
         with st.spinner("Thinking..."):
             try:
-                # Prepare state
+                # prep state
                 input_state = {"messages": st.session_state.messages}
                 
-                # Stream or Invoke
-                # For simplicity, using invoke. Streaming integration with LangGraph + Streamlit takes a bit more setup.
+                # calling graph
                 final_state = st.session_state.graph.invoke(input_state)
                 
                 response_msg = final_state["messages"][-1]
-                st.markdown(response_msg.content)
+                st.markdown(context_text(response_msg.content))
                 
                 st.session_state.messages.append(response_msg)
             except Exception as e:
-                st.error(f"An error occurred: {e}")
+                st.error(f"Error happened: {e}")
 
-# Evaluation / Debug Info (Optional)
-with st.expander("Debug / Traces"):
-    st.write("LangSmith traces are active in the background if configured.")
+# simple debug info
+with st.expander("Debug Info"):
+    st.write("LangSmith traces running in background.")
+

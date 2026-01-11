@@ -1,11 +1,11 @@
 langchain
 langchain-community
-langchain-chroma
+langchain-qdrant
 langchain-google-genai
 langgraph
 langsmith
 streamlit
-chromadb
+qdrant-client
 openai
 pypdf
 python-dotenv

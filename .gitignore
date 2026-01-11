@@ -41,6 +41,7 @@ MANIFEST
 # Streamlit
 .streamlit/
 chroma_db/
+qdrant_db/
 agent_debug.log
 message_dump.txt
 debug_*.py

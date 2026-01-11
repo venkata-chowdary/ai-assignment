@@ -32,13 +32,20 @@ class TestRAGUtils(unittest.TestCase):
         finally:
             os.remove("dummy.pdf")
 
-    @patch('rag_utils.Chroma')
+    @patch('rag_utils.QdrantVectorStore')
+    @patch('rag_utils.QdrantClient')
     @patch('rag_utils.GoogleGenerativeAIEmbeddings')
-    def test_setup_vector_store(self, mock_embeddings, mock_chroma):
+    def test_setup_vector_store(self, mock_embeddings, mock_client, mock_qdrant):
         with patch.dict(os.environ, {"GOOGLE_API_KEY": "test"}):
             chunks = ["chunk1"]
+            
+            # Mock client methods
+            mock_client_instance = mock_client.return_value
+            mock_client_instance.collection_exists.return_value = False
+            
             setup_vector_store(chunks)
-            mock_chroma.from_documents.assert_called_once()
+            mock_qdrant.from_documents.assert_called_once()
+
 
 if __name__ == '__main__':
     unittest.main()
