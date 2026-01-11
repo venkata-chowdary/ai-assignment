@@ -10,7 +10,7 @@ This project implements an agentic AI pipeline using **LangChain**, **LangGraph*
 
 -   Python 3.10+
 -   **API Keys**:
-    -   `GOOGLE_API_KEY`: For Gemini models (using `gemini-2.0-flash-exp`).
+    -   `GOOGLE_API_KEY`: For Gemini models (using `gemini-2.5-flash` and `text-embedding-004`).
     -   `OPENWEATHERMAP_API_KEY`: For weather data.
     -   `LANGCHAIN_API_KEY`: For LangSmith tracing (optional but recommended).
 
@@ -59,7 +59,7 @@ This project implements an agentic AI pipeline using **LangChain**, **LangGraph*
 
 -   `app.py`: Main Streamlit application.
 -   `agent_graph.py`: Defines the LangGraph agent, nodes, and routing logic.
--   `rag_utils.py`: PDF loading, chunking, and Vector Store (ChromaDB) setup.
+-   `rag_utils.py`: PDF loading, chunking, and Vector Store (Qdrant) setup.
 -   `weather_tool.py`: OpenWeatherMap tool implementation.
 -   `tests/`: Unit tests.
 

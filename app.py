@@ -12,10 +12,10 @@ load_dotenv()
 
 st.set_page_config(page_title="AI Agent Pipeline", layout="wide")
 
-st.title("LangGraph AI Agent: Weather & RAG (Qdrant)")
+st.title("My AI Assistant")
 
 # Sidebar for Setup
-st.sidebar.header("Configuration")
+st.sidebar.header("Document Upload")
 
 # Check if keys are set (so it doesn't just crash silently)
 if not os.getenv("GOOGLE_API_KEY"):
@@ -25,7 +25,7 @@ if not os.getenv("OPENWEATHERMAP_API_KEY"):
 
 # File Upload 
 # I put this in the sidebar to keep the main chat clean
-uploaded_file = st.sidebar.file_uploader("Upload a PDF for RAG", type=["pdf"])
+uploaded_file = st.sidebar.file_uploader("Upload your PDF (Resume, Report, etc.)", type=["pdf"], help="Max size: 2MB")
 
 from qdrant_client import QdrantClient
 
@@ -75,7 +75,7 @@ if uploaded_file:
     MAX_FILE_SIZE = 2 * 1024 * 1024 # 2MB
     
     if uploaded_file.size > MAX_FILE_SIZE:
-        st.sidebar.error("File limit is 2MB only. Please upload smaller file.")
+        st.sidebar.error("File is too big (max 2MB). Please upload a smaller one.")
     else:
         # saving to temp file
         with tempfile.NamedTemporaryFile(delete=False, suffix=".pdf") as tmp_file:
@@ -83,11 +83,11 @@ if uploaded_file:
             tmp_path = tmp_file.name
     
         # init rag
-        with st.spinner("Setting up RAG (might take few secs)..."):
+        with st.spinner("Reading your document..."):
             retriever_tool = init_rag_system(tmp_path)
             
         if retriever_tool:
-            st.sidebar.success(f"Loaded {uploaded_file.name} successfully!")
+            st.sidebar.success("Document loaded! You can ask questions now.")
 
 # recreating graph
 st.session_state.graph = create_agent_graph(retriever_tool) 
