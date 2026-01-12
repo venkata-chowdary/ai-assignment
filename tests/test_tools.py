@@ -11,6 +11,7 @@ from weather_tool import get_weather
 class TestWeatherTool(unittest.TestCase):
     @patch('weather_tool.requests.get')
     def test_get_weather_success(self, mock_get):
+        """Test: OpenWeatherMap tool returns correct data for valid city."""
         # Mocking environment variable
         with patch.dict(os.environ, {"OPENWEATHERMAP_API_KEY": "test_key"}):
             # Mocking response
@@ -18,7 +19,7 @@ class TestWeatherTool(unittest.TestCase):
             mock_response.status_code = 200
             mock_response.json.return_value = {
                 "weather": [{"description": "clear sky"}],
-                "main": {"temp": 25.0},
+                "main": {"temp": 25.0, "feels_like": 27.0},
                 "name": "Test City"
             }
             mock_get.return_value = mock_response
@@ -28,9 +29,23 @@ class TestWeatherTool(unittest.TestCase):
             self.assertIn("25.0°C", result)
 
     def test_get_weather_no_key(self):
+         """Test: Tool gracefully handles missing API key."""
          with patch.dict(os.environ, {}, clear=True):
              result = get_weather.invoke({"city": "London"})
              self.assertIn("API key not found", result)
+
+    @patch('weather_tool.requests.get')
+    def test_get_weather_api_failure(self, mock_get):
+        """Test: Tool handles 404/API errors correctly."""
+        with patch.dict(os.environ, {"OPENWEATHERMAP_API_KEY": "test"}):
+            mock_response = MagicMock()
+            mock_response.status_code = 404
+            mock_response.json.return_value = {"message": "city not found"}
+            mock_get.return_value = mock_response
+            
+            result = get_weather.invoke({"city": "LostCity"})
+            self.assertIn("Error getting weather", result)
+            self.assertIn("not found", result)
 
 if __name__ == '__main__':
     unittest.main()

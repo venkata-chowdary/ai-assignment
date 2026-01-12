@@ -70,3 +70,13 @@ The agent is smart enough to choose which tool to use based on what you ask.
 -   `agent_graph.py`: Where the specialized graph logic is.
 -   `rag_utils.py`: Code for handling PDFs and Database stuff.
 -   `weather_tool.py`: Simple function to call weather API.
+
+## How to Test
+
+If you want to check if everything is working fine (without running the app), run:
+
+```powershell
+python -m unittest discover tests -v
+```
+
+It should say `OK` if all 7 tests pass.
