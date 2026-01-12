@@ -109,7 +109,8 @@ for msg in st.session_state.messages:
 
 if prompt := st.chat_input("Ask about weather or pdf..."):
     # add user msg
-    st.session_state.messages.append(HumanMessage(content=prompt))
+    user_msg = HumanMessage(content=prompt)
+    st.session_state.messages.append(user_msg)
     with st.chat_message("user"):
         st.markdown(prompt)
 
@@ -123,9 +124,14 @@ if prompt := st.chat_input("Ask about weather or pdf..."):
                 # calling graph
                 final_state = st.session_state.graph.invoke(input_state)
                 
+                # get last message (AI response)
                 response_msg = final_state["messages"][-1]
-                st.markdown(context_text(response_msg.content))
+                response_text = context_text(response_msg.content)
                 
+                # render ONLY the text
+                st.markdown(response_text)
+                
+                # append to history
                 st.session_state.messages.append(response_msg)
             except Exception as e:
                 st.error(f"Error happened: {e}")

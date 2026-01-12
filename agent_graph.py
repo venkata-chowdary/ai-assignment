@@ -8,14 +8,8 @@ from langgraph.graph import StateGraph, START, END
 from langgraph.prebuilt import ToolNode, tools_condition
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.tools import Tool
-import logging
+# logging removed for cleaner ui
 
-# Configure logging
-logging.basicConfig(
-    filename='agent_debug.log',
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
 
 
 def create_retriever_tool(retriever, name: str, description: str) -> Tool:
