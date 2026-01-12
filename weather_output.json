@@ -1,0 +1,37 @@
+{
+  "type": "ai",
+  "data": {
+    "content": [
+      {
+        "type": "text",
+        "text": "This PDF outlines a profile with several key projects, certifications, and achievements.\n\n**Projects include:**\n*   **Trackly - Job Application Tracker:** A platform for managing job applications, featuring automated email processing, AI-powered classification, and an intuitive dashboard, built with Next.js, Prisma ORM, Clerk, and Gmail API.\n*   **AI-powered Travel Planner:** A system that generates personalized travel itineraries, optimizes routes, and highlights key attractions, utilizing Next.js for the UI and FastAPI for the backend, along with LangGraph and Open Source LLMs.\n*   **RAG based Document Question Answering System:** An AI-driven system for querying PDFs using natural language, incorporating advanced text chunking, semantic embeddings, hybrid retrieval, reranking, and a multi-step reasoning pipeline with LangChain/LangGraph and ChromaDB for efficient document retrieval.\n\n**Technologies used** across these projects include Python, LangChain, LangGraph, ChromaDB, HuggingFace Embeddings, Rerankers, FastAPI, Next.js, Prisma ORM, Clerk, Gmail API, Open Source LLMs, and External APIs. The individual also has experience with Git for version control and deployment.\n\n**Certifications** obtained are in Web Development (Udemy, 2022) and Programming in Python (Meta, 2023).\n\n**Achievements** highlight strong performance, including securing 1st place in a Frontend Challenge, receiving a Merit Scholarship for academic excellence (top 5% with a CGPA of 9.2), and winning a Poster Design Competition.",
+        "extras": {
+          "signature": "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"
+        }
+      }
+    ],
+    "additional_kwargs": {},
+    "response_metadata": {
+      "finish_reason": "STOP",
+      "model_name": "gemini-2.5-flash",
+      "safety_ratings": [],
+      "model_provider": "google_genai"
+    },
+    "type": "ai",
+    "name": null,
+    "id": "lc_run--019bafdf-e1b5-71d1-8b3a-96b8c0dd6476-0",
+    "tool_calls": [],
+    "invalid_tool_calls": [],
+    "usage_metadata": {
+      "input_tokens": 1531,
+      "output_tokens": 804,
+      "total_tokens": 2335,
+      "input_token_details": {
+        "cache_read": 0
+      },
+      "output_token_details": {
+        "reasoning": 476
+      }
+    }
+  }
+}
